@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hành Trình Chinh Phục Điện Thế</title>
+    
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel (để chạy JSX trực tiếp trên trình duyệt) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Các hiệu ứng Animation tùy chỉnh */
+        @keyframes scale-in { 
+            0% { transform: scale(0.8); opacity: 0; } 
+            100% { transform: scale(1); opacity: 1; } 
+        }
+        .animate-scale-in { 
+            animation: scale-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- CƠ SỞ DỮ LIỆU CÂU HỎI (35 Câu) ---
+        const QUESTIONS = [
+          // MỨC 1: NHẬN BIẾT
+          { id: 1, level: 1, text: "Điện thế tại một điểm trong điện trường là gì?", options: ["Đại lượng đặc trưng cho khả năng sinh công của điện trường", "Đại lượng đặc trưng cho điện trường về phương diện tạo ra thế năng", "Đại lượng đặc trưng cho tác dụng lực của điện trường", "Đại lượng đo bằng công của lực điện"], correct: 1 },
+          { id: 2, level: 1, text: "Kí hiệu của điện thế là gì?", options: ["U", "E", "V", "A"], correct: 2 },
+          { id: 3, level: 1, text: "Đơn vị của điện thế là gì?", options: ["Joule (J)", "Vôn (V)", "Ampe (A)", "Oát (W)"], correct: 1 },
+          { id: 4, level: 1, text: "Dụng cụ nào dùng để đo hiệu điện thế (liên quan trực tiếp đến điện thế)?", options: ["Ampe kế", "Ôm kế", "Vôn kế", "Công tơ điện"], correct: 2 },
+          { id: 5, level: 1, text: "Công thức tính điện thế V tại một điểm là?", options: ["V = A/q", "V = q/A", "V = E.d", "V = F/q"], correct: 0 },
+          { id: 6, level: 1, text: "Điện thế là đại lượng vô hướng hay vectơ?", options: ["Vectơ", "Vô hướng", "Tùy trường hợp", "Cả vô hướng và vectơ"], correct: 1 },
+          { id: 7, level: 1, text: "Điện thế có thể có giá trị âm không?", options: ["Không bao giờ", "Có thể dương, âm hoặc bằng 0", "Chỉ luôn dương", "Luôn bằng 0"], correct: 1 },
+          { id: 8, level: 1, text: "Người ta thường chọn mốc điện thế (V = 0) ở đâu?", options: ["Tại mặt đất hoặc ở vô cực", "Tại nguồn điện", "Tại điểm đặt điện tích", "Tại cực dương"], correct: 0 },
+          { id: 9, level: 1, text: "Điện thế tại một điểm có phụ thuộc vào điện tích thử q đặt tại đó không?", options: ["Có, tỉ lệ thuận với q", "Có, tỉ lệ nghịch với q", "Không phụ thuộc vào q", "Phụ thuộc vào dấu của q"], correct: 2 },
+          { id: 10, level: 1, text: "Quanh một điện tích dương, điện thế lớn nhất ở đâu?", options: ["Ở vô cực", "Ở càng gần điện tích", "Ở càng xa điện tích", "Điện thế bằng nhau ở mọi nơi"], correct: 1 },
+          
+          // MỨC 2: THÔNG HIỂU
+          { id: 11, level: 2, text: "Khác biệt cơ bản giữa điện thế và điện thế năng là gì?", options: ["Điện thế phụ thuộc q, thế năng không phụ thuộc q", "Điện thế là đặc trưng của điện trường, thế năng là năng lượng của hệ (q và E)", "Cả hai là một", "Điện thế có đơn vị J, thế năng đơn vị V"], correct: 1 },
+          { id: 12, level: 2, text: "Vì sao nói điện thế đặc trưng cho điện trường về phương diện tạo ra thế năng?", options: ["Vì V = W/q, nó cho biết thế năng của 1 đơn vị điện tích", "Vì điện thế sinh ra lực", "Vì điện thế tạo ra dòng điện", "Vì điện thế làm nóng dây dẫn"], correct: 0 },
+          { id: 13, level: 2, text: "Vectơ cường độ điện trường hướng theo chiều nào của điện thế?", options: ["Chiều tăng của điện thế", "Chiều giảm của điện thế", "Vuông góc với điện thế", "Không có quy luật"], correct: 1 },
+          { id: 14, level: 2, text: "Ý nghĩa của câu 'Điện thế tại M là 1V'?", options: ["Điện trường tại M tác dụng lực 1N", "Thế năng của điện tích 1C đặt tại M là 1J", "Cần 1J để mang điện tích từ M ra vô cực", "Tại M có 1 electron"], correct: 1 },
+          { id: 15, level: 2, text: "Khi điện tích q > 0 dịch chuyển dọc theo chiều đường sức điện, điện thế thay đổi thế nào?", options: ["Tăng lên", "Không đổi", "Giảm xuống", "Bằng 0"], correct: 2 },
+          { id: 16, level: 2, text: "Tại sao điện thế có thể âm?", options: ["Do điện trường yếu", "Do công di chuyển điện tích từ M ra mốc cản trở chuyển động", "Do chọn q âm", "Do cường độ điện trường âm"], correct: 1 },
+          { id: 17, level: 2, text: "So sánh điện thế do điện tích +Q và -Q gây ra tại cùng khoảng cách r?", options: ["Bằng nhau", "Của +Q là dương, của -Q là âm", "Của -Q lớn hơn", "Đều bằng 0"], correct: 1 },
+          { id: 18, level: 2, text: "Điện thế do một điện tích điểm gây ra phụ thuộc vào khoảng cách r như thế nào?", options: ["Tỉ lệ thuận với r", "Tỉ lệ nghịch với r", "Tỉ lệ nghịch với r bình phương", "Không phụ thuộc"], correct: 1 },
+          { id: 19, level: 2, text: "Vì sao điện thế là đại lượng vô hướng?", options: ["Vì nó được định nghĩa qua công (A) và điện tích (q) đều là vô hướng", "Vì nó không chuyển động", "Vì nó có thể âm", "Vì nó phụ thuộc vào khoảng cách"], correct: 0 },
+          { id: 20, level: 2, text: "Điện thế có phụ thuộc vào môi trường (hằng số điện môi) không?", options: ["Không", "Có, tỉ lệ thuận", "Có, tỉ lệ nghịch với hằng số điện môi", "Chỉ phụ thuộc trong chân không"], correct: 2 },
+
+          // MỨC 3: VẬN DỤNG
+          { id: 21, level: 3, text: "Cho điện tích q = 2 μC đặt tại điểm có điện thế V = 500V. Tính thế năng điện W.", options: ["1 mJ", "2.5 mJ", "1000 J", "0.001 V"], correct: 0 },
+          { id: 22, level: 3, text: "Tính công cần thiết để dịch chuyển q = 5 μC từ vô cực về điểm có điện thế 200V.", options: ["1 mJ", "1000 J", "2.5 mJ", "0.001 mJ"], correct: 0 },
+          { id: 23, level: 3, text: "Thế năng của q = -4 μC tại điểm M là -0.4 mJ. Tính điện thế tại M.", options: ["-100 V", "100 V", "10 V", "-10 V"], correct: 1 },
+          { id: 24, level: 3, text: "Điện thế tại điểm cách điện tích Q = 4 μC một khoảng r = 0,2m trong chân không là bao nhiêu? (k=9.10^9)", options: ["180.000 V", "1.800 V", "360.000 V", "18.000 V"], correct: 0 },
+          { id: 25, level: 3, text: "Công của lực điện khi q = 1 μC di chuyển từ M (Vm = 50V) đến N (Vn = 10V) là?", options: ["40 μJ", "-40 μJ", "60 μJ", "0 J"], correct: 0 },
+          { id: 26, level: 3, text: "Thế năng điện của e (q = -1.6.10^-19 C) tại điểm có V = 5V là?", options: ["-8.10^-19 J", "8.10^-19 J", "3.2.10^-19 J", "-3.2.10^-19 J"], correct: 0 },
+          { id: 27, level: 3, text: "Điện thế tại M là 100V, tại N là -50V. Chọn phát biểu đúng.", options: ["M ở xa điện tích dương hơn N", "Điện trường hướng từ M sang N", "Điện trường hướng từ N sang M", "Không xác định được chiều điện trường"], correct: 1 },
+          { id: 28, level: 3, text: "Một nguồn sinh ra tại cách nó 10cm điện thế 90V. Điện tích nguồn Q là? (Chân không)", options: ["1 nC", "1 μC", "10 nC", "0.1 nC"], correct: 0 },
+          { id: 29, level: 3, text: "Tại trung điểm của đoạn thẳng nối hai điện tích điểm bằng nhau và trái dấu, điện thế bằng:", options: ["Cực đại", "Cực tiểu", "Không xác định", "Bằng 0"], correct: 3 },
+          { id: 30, level: 3, text: "Có hai điện tích điểm q1 = 2μC và q2 = -2μC cách nhau 10cm. Tính V tại điểm M cách đều hai điện tích khoảng 10cm.", options: ["36.000 V", "0 V", "-36.000 V", "18.000 V"], correct: 1 },
+
+          // MỨC 4: VẬN DỤNG CAO
+          { id: 31, level: 4, text: "Giải thích hiện tượng chim đậu trên một dây điện cao thế không bị giật?", options: ["Chân chim cách điện rất tốt", "Chim có điện trở cực lớn", "Hai chân chim đặt trên cùng 1 dây nên hiệu điện thế (chênh lệch điện thế) bằng 0", "Dòng điện không đi qua vật sống"], correct: 2 },
+          { id: 32, level: 4, text: "Trong mô hình cột thu lôi, tại sao đầu kim phải nhọn?", options: ["Để dễ đâm xuyên qua không khí", "Tại mũi nhọn, mật độ điện tích lớn, điện thế rất cao làm ion hóa không khí dễ dàng dẫn sét", "Để chim không đậu vào", "Để giảm khối lượng cột"], correct: 1 },
+          { id: 33, level: 4, text: "Sự nguy hiểm của 'điện áp bước' khi có dây điện cao thế rơi xuống đất là do đâu?", options: ["Do dòng điện chạy từ mặt đất lên không khí", "Do chân trước và chân sau ở hai vòng đẳng thế khác nhau tạo ra hiệu điện thế chạy qua người", "Do nhiệt độ của dây điện quá cao", "Do từ trường xung quanh dây quá mạnh"], correct: 1 },
+          { id: 34, level: 4, text: "Để an toàn điện trong gia đình, các vỏ máy giặt, tủ lạnh thường được nối đất. Mục đích là gì?", options: ["Làm tăng tuổi thọ máy", "Cân bằng điện thế vỏ máy với đất (V=0), tránh giật khi có rò điện", "Tiết kiệm điện năng", "Giảm nhiễu sóng vô tuyến"], correct: 1 },
+          { id: 35, level: 4, text: "Trong máy gia tốc hạt, người ta dùng hiệu điện thế hàng triệu Vôn để làm gì?", options: ["Tạo ra điện trường cực mạnh sinh công lớn làm tăng động năng hạt đến vận tốc rất cao", "Làm nóng các hạt", "Tạo ra ánh sáng chớp", "Tăng khối lượng của hạt"], correct: 0 }
+        ];
+
+        // --- CẤU HÌNH BÀN CỜ (40 Ô) ---
+        const BOARD_SIZE = 40;
+        const SPECIAL_CELLS = {
+          5: { type: 'honey', name: 'Mật Ong', icon: 'fa-star', color: 'text-yellow-400', bg: 'bg-yellow-400/20' },
+          12: { type: 'honey', name: 'Mật Ong', icon: 'fa-star', color: 'text-yellow-400', bg: 'bg-yellow-400/20' },
+          20: { type: 'honey', name: 'Mật Ong', icon: 'fa-star', color: 'text-yellow-400', bg: 'bg-yellow-400/20' },
+          28: { type: 'honey', name: 'Mật Ong', icon: 'fa-star', color: 'text-yellow-400', bg: 'bg-yellow-400/20' },
+          35: { type: 'honey', name: 'Mật Ong', icon: 'fa-star', color: 'text-yellow-400', bg: 'bg-yellow-400/20' },
+          
+          8: { type: 'boost', name: 'Tăng Tốc', icon: 'fa-bolt', color: 'text-blue-400', bg: 'bg-blue-400/20' },
+          16: { type: 'boost', name: 'Tăng Tốc', icon: 'fa-bolt', color: 'text-blue-400', bg: 'bg-blue-400/20' },
+          25: { type: 'boost', name: 'Tăng Tốc', icon: 'fa-bolt', color: 'text-blue-400', bg: 'bg-blue-400/20' },
+          32: { type: 'boost', name: 'Tăng Tốc', icon: 'fa-bolt', color: 'text-blue-400', bg: 'bg-blue-400/20' },
+          
+          10: { type: 'energy', name: 'Năng Lượng', icon: 'fa-battery-full', color: 'text-green-400', bg: 'bg-green-400/20' },
+          22: { type: 'energy', name: 'Năng Lượng', icon: 'fa-battery-full', color: 'text-green-400', bg: 'bg-green-400/20' },
+          30: { type: 'energy', name: 'Năng Lượng', icon: 'fa-battery-full', color: 'text-green-400', bg: 'bg-green-400/20' },
+          
+          7: { type: 'lucky', name: 'May Mắn', icon: 'fa-gift', color: 'text-pink-400', bg: 'bg-pink-400/20' },
+          18: { type: 'lucky', name: 'May Mắn', icon: 'fa-gift', color: 'text-pink-400', bg: 'bg-pink-400/20' },
+          27: { type: 'lucky', name: 'May Mắn', icon: 'fa-gift', color: 'text-pink-400', bg: 'bg-pink-400/20' },
+          
+          15: { type: 'challenge', name: 'Thử Thách', icon: 'fa-exclamation-triangle', color: 'text-red-500', bg: 'bg-red-500/20' },
+          24: { type: 'challenge', name: 'Thử Thách', icon: 'fa-exclamation-triangle', color: 'text-red-500', bg: 'bg-red-500/20' },
+          33: { type: 'challenge', name: 'Thử Thách', icon: 'fa-exclamation-triangle', color: 'text-red-500', bg: 'bg-red-500/20' },
+          38: { type: 'challenge', name: 'Thử Thách', icon: 'fa-exclamation-triangle', color: 'text-red-500', bg: 'bg-red-500/20' },
+          39: { type: 'challenge', name: 'Thử Thách', icon: 'fa-exclamation-triangle', color: 'text-red-500', bg: 'bg-red-500/20' },
+        };
+
+        const generateBoardNodes = () => {
+          const nodes = [];
+          const rows = 5;
+          const cols = 8;
+          for (let i = 0; i < BOARD_SIZE; i++) {
+            const row = Math.floor(i / cols);
+            const col = i % cols;
+            const x = row % 2 === 0 ? col : (cols - 1 - col);
+            
+            nodes.push({
+              id: i + 1,
+              x: 10 + (x * 11.4), 
+              y: 90 - (row * 20),
+              ...SPECIAL_CELLS[i + 1]
+            });
+          }
+          nodes[39].x = 50; 
+          nodes[39].y = 5;
+          return nodes;
+        };
+        const BOARD_NODES = generateBoardNodes();
+
+        const INITIAL_PLAYERS = [
+          { id: 0, name: "Electron", symbol: "e⁻", color: "bg-red-500", glow: "shadow-red-500", pos: 0, points: 0 },
+          { id: 1, name: "Proton", symbol: "p⁺", color: "bg-blue-500", glow: "shadow-blue-500", pos: 0, points: 0 },
+          { id: 2, name: "Photon", symbol: "γ", color: "bg-yellow-400", glow: "shadow-yellow-400", pos: 0, points: 0 },
+          { id: 3, name: "Ion", symbol: "I⁺", color: "bg-purple-500", glow: "shadow-purple-500", pos: 0, points: 0 },
+        ];
+
+        function App() {
+          const [gameState, setGameState] = useState('start');
+          const [players, setPlayers] = useState(INITIAL_PLAYERS);
+          const [currentPlayerIdx, setCurrentPlayerIdx] = useState(0);
+          const [diceValue, setDiceValue] = useState(1);
+          const [activeQuestion, setActiveQuestion] = useState(null);
+          const [timeLeft, setTimeLeft] = useState(15);
+          const [logs, setLogs] = useState(["Trò chơi sẵn sàng! Hãy nhấn tung xúc xắc."]);
+          const [eventMessage, setEventMessage] = useState(null);
+
+          const timerRef = useRef(null);
+
+          const logMsg = (msg) => {
+            setLogs(prev => [msg, ...prev].slice(0, 10));
+          };
+
+          const nextTurn = () => {
+            setCurrentPlayerIdx((prev) => (prev + 1) % 4);
+            setGameState('playing');
+          };
+
+          const handleRollDice = () => {
+            if (gameState !== 'playing') return;
+            setGameState('rolling');
+            
+            let rolls = 0;
+            const rollInterval = setInterval(() => {
+              setDiceValue(Math.floor(Math.random() * 6) + 1);
+              rolls++;
+              if (rolls > 10) {
+                clearInterval(rollInterval);
+                const finalDice = Math.floor(Math.random() * 6) + 1;
+                setDiceValue(finalDice);
+                logMsg(`${players[currentPlayerIdx].name} tung được ${finalDice} nút.`);
+                setTimeout(() => movePlayer(finalDice), 1000);
+              }
+            }, 100);
+          };
+
+          const movePlayer = (steps, isExtraMove = false) => {
+            setGameState('moving');
+            let currentPos = players[currentPlayerIdx].pos;
+            let targetPos = currentPos + steps;
+            
+            if (targetPos > 40) targetPos = 40; 
+            if (targetPos < 1) targetPos = 1;
+
+            setPlayers(prev => prev.map((p, i) => i === currentPlayerIdx ? { ...p, pos: targetPos } : p));
+
+            setTimeout(() => {
+              checkCellEvent(targetPos, isExtraMove);
+            }, 800); 
+          };
+
+          const checkCellEvent = (pos, isExtraMove) => {
+            if (pos === 40) {
+              setGameState('gameover');
+              return;
+            }
+
+            const cell = BOARD_NODES[pos - 1];
+            if (cell && cell.type) {
+              handleSpecialCell(cell.type);
+            } else {
+              if (!isExtraMove) triggerQuestion('normal');
+              else nextTurn();
+            }
+          };
+
+          const handleSpecialCell = (type) => {
+            setGameState('event');
+            
+            switch (type) {
+              case 'honey':
+                setEventMessage({ title: "Ô MẬT ONG", desc: "+10 Điểm", type: 'honey' });
+                updatePoints(10);
+                setTimeout(() => { setEventMessage(null); nextTurn(); }, 2000);
+                break;
+              case 'boost':
+                setEventMessage({ title: "Ô TĂNG TỐC", desc: "Tiến thêm 2 bước!", type: 'boost' });
+                setTimeout(() => { setEventMessage(null); movePlayer(2, true); }, 2000);
+                break;
+              case 'energy':
+                setEventMessage({ title: "Ô NĂNG LƯỢNG", desc: "Thêm 1 lượt chơi!", type: 'energy' });
+                setTimeout(() => { setEventMessage(null); setGameState('playing'); }, 2000);
+                break;
+              case 'lucky':
+                const luck = Math.random() > 0.5;
+                if(luck) {
+                    setEventMessage({ title: "MAY MẮN", desc: "+5 Điểm thưởng!", type: 'lucky' });
+                    updatePoints(5);
+                } else {
+                    setEventMessage({ title: "MAY MẮN", desc: "Tiến thêm 1 bước!", type: 'lucky' });
+                    setTimeout(() => { setEventMessage(null); movePlayer(1, true); return;}, 2000);
+                }
+                setTimeout(() => { setEventMessage(null); nextTurn(); }, 2000);
+                break;
+              case 'challenge':
+                setEventMessage({ title: "THỬ THÁCH", desc: "Câu hỏi vận dụng cao! Đúng: +3 bước. Sai: -2 bước.", type: 'challenge' });
+                setTimeout(() => { setEventMessage(null); triggerQuestion('challenge'); }, 2500);
+                break;
+              default:
+                nextTurn();
+            }
+          };
+
+          const triggerQuestion = (type) => {
+            let pool = [];
+            if (type === 'challenge') {
+              pool = QUESTIONS.filter(q => q.level === 4);
+            } else {
+              const pos = players[currentPlayerIdx].pos;
+              if (pos < 15) pool = QUESTIONS.filter(q => q.level === 1);
+              else if (pos < 28) pool = QUESTIONS.filter(q => q.level === 2);
+              else pool = QUESTIONS.filter(q => q.level === 3);
+            }
+            
+            if (pool.length === 0) pool = QUESTIONS;
+            
+            const randomQ = pool[Math.floor(Math.random() * pool.length)];
+            setActiveQuestion({ ...randomQ, qType: type });
+            setTimeLeft(15);
+            setGameState('question');
+          };
+
+          useEffect(() => {
+            if (gameState === 'question') {
+              timerRef.current = setInterval(() => {
+                setTimeLeft(prev => {
+                  if (prev <= 1) {
+                    clearInterval(timerRef.current);
+                    handleAnswer(-1); 
+                    return 0;
+                  }
+                  return prev - 1;
+                });
+              }, 1000);
+            }
+            return () => clearInterval(timerRef.current);
+          }, [gameState]);
+
+          const handleAnswer = (selectedIndex) => {
+            clearInterval(timerRef.current);
+            const isCorrect = selectedIndex === activeQuestion.correct;
+            
+            if (isCorrect) {
+              logMsg(`${players[currentPlayerIdx].name} trả lời ĐÚNG! +5 điểm.`);
+              updatePoints(5);
+              if (activeQuestion.qType === 'challenge') {
+                setTimeout(() => { setActiveQuestion(null); movePlayer(3, true); }, 1500);
+                return;
+              }
+            } else {
+              logMsg(`${players[currentPlayerIdx].name} trả lời SAI! ${selectedIndex === -1 ? '(Hết giờ)' : ''}`);
+              if (activeQuestion.qType === 'challenge') {
+                setTimeout(() => { setActiveQuestion(null); movePlayer(-2, true); }, 1500);
+                return;
+              }
+            }
+            
+            setTimeout(() => {
+              setActiveQuestion(null);
+              nextTurn();
+            }, 1500);
+          };
+
+          const updatePoints = (points) => {
+            setPlayers(prev => prev.map((p, i) => i === currentPlayerIdx ? { ...p, points: p.points + points } : p));
+          };
+
+          const resetGame = () => {
+            setPlayers(INITIAL_PLAYERS);
+            setCurrentPlayerIdx(0);
+            setDiceValue(1);
+            setGameState('playing');
+            setLogs(["Trò chơi bắt đầu!"]);
+          };
+
+          const renderEventIcon = (type) => {
+             switch(type) {
+               case 'honey': return <i className="fas fa-star text-5xl text-yellow-400 mx-auto animate-[spin_3s_linear_infinite]"></i>;
+               case 'boost': return <i className="fas fa-bolt text-5xl text-blue-400 mx-auto animate-bounce"></i>;
+               case 'energy': return <i className="fas fa-battery-full text-5xl text-green-400 mx-auto animate-pulse"></i>;
+               case 'lucky': return <i className="fas fa-gift text-5xl text-pink-400 mx-auto animate-bounce"></i>;
+               case 'challenge': return <i className="fas fa-exclamation-triangle text-5xl text-red-500 mx-auto animate-pulse"></i>;
+               default: return null;
+             }
+          }
+
+          if (gameState === 'start') {
+            return (
+              <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 overflow-hidden relative font-sans">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-black pointer-events-none"></div>
+                <div className="relative z-10 text-center animate-fade-in-up">
+                  <i className="fas fa-dice-d20 text-cyan-400 text-[6rem] mx-auto mb-6 animate-pulse block text-center"></i>
+                  <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight drop-shadow-[0_0_15px_rgba(34,211,238,0.5)] mb-4 uppercase">
+                    Hành Trình<br/>Chinh Phục Điện Thế
+                  </h1>
+                  <p className="text-slate-300 text-lg md:text-xl mb-12 max-w-2xl mx-auto">
+                    Trải nghiệm game board 3D Infographic. Hóa thân thành các hạt vi mô, vượt qua điện trường và làm chủ các định luật Vật Lý!
+                  </p>
+                  <button 
+                    onClick={() => setGameState('playing')}
+                    className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-indigo-600 rounded-full overflow-hidden transition-all hover:scale-105 hover:bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]"
+                  >
+                    <span className="absolute w-0 h-0 transition-all duration-500 ease-out bg-white rounded-full group-hover:w-56 group-hover:h-56 opacity-10"></span>
+                    <i className="fas fa-play mr-2"></i> BẮT ĐẦU CHƠI
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          if (gameState === 'gameover') {
+            const winner = [...players].sort((a,b) => b.pos === a.pos ? b.points - a.points : b.pos - a.pos)[0];
+            return (
+              <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 relative font-sans">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-yellow-900/40 via-slate-900 to-black"></div>
+                <div className="relative z-10 text-center bg-slate-800/80 backdrop-blur-md p-12 rounded-3xl border border-yellow-500/30 shadow-[0_0_50px_rgba(234,179,8,0.2)]">
+                  <i className="fas fa-trophy text-yellow-400 text-8xl mx-auto mb-6 animate-bounce drop-shadow-[0_0_15px_rgba(250,204,21,1)] block text-center"></i>
+                  <h2 className="text-4xl font-bold text-white mb-2 uppercase tracking-wider">NHÀ CHINH PHỤC ĐIỆN THẾ</h2>
+                  <h3 className={`text-5xl font-black mb-8 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500`}>
+                    ĐỘI {winner.name}
+                  </h3>
+                  <p className="text-xl text-slate-300 italic mb-8 border-t border-slate-600 pt-6">
+                    "Muốn hiểu thế giới điện học,<br/>hãy bắt đầu từ việc khám phá điện thế."
+                  </p>
+                  <button 
+                    onClick={resetGame}
+                    className="flex items-center mx-auto px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-full font-bold transition-colors"
+                  >
+                    <i className="fas fa-undo mr-2"></i> Chơi Lại
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="min-h-screen bg-[#0a0f1c] text-white flex flex-col font-sans overflow-hidden">
+              {/* HEADER */}
+              <header className="p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md flex justify-between items-center z-20">
+                <div className="flex items-center gap-3">
+                  <i className="fas fa-bolt text-cyan-400 text-3xl"></i>
+                  <h1 className="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 uppercase tracking-widest drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]">
+                    Điện Thế Quest
+                  </h1>
+                </div>
+                <div className="flex items-center gap-4 text-sm font-semibold">
+                   <span className="text-slate-400 hidden md:inline">Lượt của:</span>
+                   <span className={`px-4 py-1 rounded-full border border-slate-700 shadow-[0_0_10px_currentColor] ${players[currentPlayerIdx].color.replace('bg-', 'text-')}`}>
+                      {players[currentPlayerIdx].name}
+                   </span>
+                </div>
+              </header>
+
+              {/* MAIN GAME AREA */}
+              <div className="flex flex-1 flex-col lg:flex-row relative">
+                
+                {/* LỚP PHỦ SỰ KIỆN / CÂU HỎI */}
+                {(gameState === 'event' || gameState === 'question') && (
+                  <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    {gameState === 'event' && eventMessage && (
+                      <div className="bg-slate-800 p-8 rounded-3xl border border-slate-600 text-center shadow-2xl animate-scale-in max-w-md w-full">
+                        <div className="text-center mb-4">{renderEventIcon(eventMessage.type)}</div>
+                        <h3 className="text-3xl font-bold mt-4 mb-2 text-white">{eventMessage.title}</h3>
+                        <p className="text-xl text-cyan-300">{eventMessage.desc}</p>
+                      </div>
+                    )}
+                    
+                    {gameState === 'question' && activeQuestion && (
+                      <div className="bg-slate-800 p-6 md:p-8 rounded-3xl border border-cyan-500/30 text-center shadow-[0_0_30px_rgba(34,211,238,0.2)] max-w-2xl w-full relative overflow-hidden animate-scale-in">
+                        <div className="absolute top-0 left-0 h-1 bg-cyan-400 transition-all duration-1000 linear" style={{width: `${(timeLeft/15)*100}%`}}></div>
+                        <div className="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
+                          <span className={`px-3 py-1 rounded-md text-xs font-bold uppercase ${activeQuestion.qType === 'challenge' ? 'bg-red-500/20 text-red-400 border border-red-500/50' : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50'}`}>
+                            {activeQuestion.qType === 'challenge' ? 'Vận Dụng Cao' : `Mức ${activeQuestion.level}`}
+                          </span>
+                          <span className={`text-2xl font-mono font-bold ${timeLeft <= 5 ? 'text-red-500 animate-ping' : 'text-cyan-400'}`}>
+                            00:{timeLeft.toString().padStart(2, '0')}
+                          </span>
+                        </div>
+                        
+                        <h3 className="text-xl md:text-2xl font-semibold mb-8 text-slate-100 leading-relaxed">
+                          {activeQuestion.text}
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {activeQuestion.options.map((opt, idx) => (
+                            <button 
+                              key={idx}
+                              onClick={() => handleAnswer(idx)}
+                              className="p-4 bg-slate-700/50 hover:bg-slate-600 border border-slate-600 rounded-xl text-left transition-all hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(34,211,238,0.3)] group"
+                            >
+                              <span className="inline-block w-8 h-8 bg-slate-800 rounded-lg text-center leading-8 mr-3 text-cyan-400 font-bold group-hover:bg-cyan-500 group-hover:text-white transition-colors">
+                                {String.fromCharCode(65 + idx)}
+                              </span>
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* CỘT BÊN TRÁI: BÀN CỜ INFOGRAPHIC */}
+                <div className="flex-1 relative p-4 md:p-8 flex items-center justify-center min-h-[60vh] overflow-hidden bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 to-transparent">
+                  {/* Lưới tọa độ background */}
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
+                  
+                  <div className="relative w-full max-w-4xl h-[600px] border border-cyan-900/30 rounded-3xl bg-slate-900/40 backdrop-blur-md shadow-[inset_0_0_50px_rgba(0,0,0,0.5)]">
+                    
+                    {/* Đường dây nối (SVG) */}
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ filter: 'drop-shadow(0 0 5px rgba(34,211,238,0.5))' }}>
+                      <path 
+                        d={BOARD_NODES.reduce((path, node, i) => {
+                          if (i === 0) return `M ${node.x}% ${node.y}%`;
+                          return `${path} L ${node.x}% ${node.y}%`;
+                        }, '')}
+                        fill="none" 
+                        stroke="rgba(34, 211, 238, 0.2)" 
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+
+                    {/* Các Ô trên Bàn Cờ */}
+                    {BOARD_NODES.map((node) => {
+                      const isStart = node.id === 1;
+                      const isEnd = node.id === 40;
+                      return (
+                        <div 
+                          key={node.id}
+                          className={`absolute w-10 h-10 md:w-14 md:h-14 -ml-5 -mt-5 md:-ml-7 md:-mt-7 rounded-full flex items-center justify-center font-bold text-xs md:text-sm border-2 transition-all duration-300 z-10
+                            ${isEnd ? 'bg-yellow-500 border-yellow-300 shadow-[0_0_20px_rgba(234,179,8,0.8)] z-20 w-16 h-16 md:w-20 md:h-20 -ml-8 -mt-8 md:-ml-10 md:-mt-10' : 
+                              isStart ? 'bg-cyan-600 border-cyan-300 shadow-[0_0_15px_rgba(8,145,178,0.8)]' :
+                              node.bg ? `${node.bg} border-${node.color.split('-')[1]}-500/50 shadow-[0_0_10px_currentColor]` : 
+                              'bg-slate-800 border-slate-600 hover:border-cyan-400'
+                            }
+                          `}
+                          style={{ 
+                            left: `${node.x}%`, 
+                            top: `${node.y}%`,
+                            color: node.color ? '' : '#94a3b8' 
+                          }}
+                          title={node.name || `Ô ${node.id}`}
+                        >
+                          {isEnd ? <i className="fas fa-trophy text-white text-3xl animate-pulse"></i> : 
+                           node.icon ? <i className={`fas ${node.icon} ${node.color} text-sm md:text-xl`}></i> : 
+                           node.id}
+                        </div>
+                      );
+                    })}
+
+                    {/* Vùng xuất phát */}
+                    <div className="absolute bottom-4 left-4 right-4 h-16 border-2 border-dashed border-slate-700 rounded-xl flex items-center justify-center gap-4 bg-slate-800/50">
+                      <span className="text-slate-500 font-mono text-sm uppercase tracking-widest absolute -top-3 bg-slate-900 px-2">Khu Vực Chờ</span>
+                      {players.filter(p => p.pos === 0).map(p => (
+                        <PlayerToken key={`wait-${p.id}`} player={p} inBoard={false} />
+                      ))}
+                    </div>
+
+                    {/* Quân Cờ trên Bàn */}
+                    {players.filter(p => p.pos > 0).map((player) => {
+                      const targetNode = BOARD_NODES[player.pos - 1];
+                      if (!targetNode) return null;
+                      
+                      const playersAtPos = players.filter(p => p.pos === player.pos);
+                      const idxAtPos = playersAtPos.findIndex(p => p.id === player.id);
+                      const offset = playersAtPos.length > 1 ? (idxAtPos * 10 - (playersAtPos.length - 1) * 5) : 0;
+
+                      return (
+                        <div 
+                          key={`board-${player.id}`}
+                          className="absolute z-30 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1)"
+                          style={{
+                            left: `calc(${targetNode.x}% + ${offset}px)`,
+                            top: `calc(${targetNode.y}% + ${offset}px)`,
+                            transform: 'translate(-50%, -50%)'
+                          }}
+                        >
+                          <PlayerToken player={player} inBoard={true} />
+                        </div>
+                      );
+                    })}
+
+                  </div>
+                </div>
+
+                {/* CỘT BÊN PHẢI: BẢNG ĐIỀU KHIỂN & TIẾN TRÌNH */}
+                <div className="w-full lg:w-96 bg-slate-900 border-l border-slate-800 p-6 flex flex-col gap-6 z-10 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
+                  
+                  {/* Xúc xắc */}
+                  <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 text-center relative overflow-hidden">
+                     <div className="absolute top-0 right-0 p-2 opacity-20"><i className="fas fa-microchip text-5xl"></i></div>
+                     <h3 className="text-slate-400 text-sm font-bold uppercase mb-4 tracking-wider">Hệ Thống Động Lực</h3>
+                     
+                     <div className="flex justify-center mb-6">
+                        <div className={`w-24 h-24 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl flex items-center justify-center shadow-inner border border-slate-600 ${gameState === 'rolling' ? 'animate-spin' : ''} shadow-[0_0_20px_rgba(255,255,255,0.1)]`}>
+                          <span className="text-5xl font-black text-white drop-shadow-md">{diceValue}</span>
+                        </div>
+                     </div>
+
+                     <button
+                       onClick={handleRollDice}
+                       disabled={gameState !== 'playing'}
+                       className={`w-full py-4 rounded-xl font-bold text-lg transition-all
+                        ${gameState === 'playing' 
+                          ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-[0_0_15px_rgba(8,145,178,0.5)] hover:shadow-[0_0_25px_rgba(8,145,178,0.8)] cursor-pointer' 
+                          : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
+                     >
+                       {gameState === 'rolling' ? 'ĐANG TẠO ĐỘNG NĂNG...' : 'TUNG XÚC XẮC'}
+                     </button>
+                  </div>
+
+                  {/* Thanh Tiến Trình (Điểm) */}
+                  <div className="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex-1">
+                    <h3 className="text-slate-400 text-sm font-bold uppercase mb-4 tracking-wider flex items-center gap-2">
+                      <i className="fas fa-dna"></i> Năng Lượng Đội (Điểm)
+                    </h3>
+                    <div className="space-y-4">
+                      {players.map((player) => (
+                        <div key={player.id} className="relative">
+                          <div className="flex justify-between text-xs font-bold mb-1">
+                            <span className={`text-${player.color.split('-')[1]}-400`}>{player.name} {player.id === currentPlayerIdx && '◀'}</span>
+                            <span className="text-slate-300">{player.points} pts / Ô {player.pos}</span>
+                          </div>
+                          {/* Progress bar kiểu đèn Neon */}
+                          <div className="h-3 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-700 p-[1px]">
+                            <div 
+                              className={`h-full rounded-full ${player.color} transition-all duration-500`}
+                              style={{ 
+                                width: `${Math.min((player.points / 50) * 100, 100)}%`, 
+                                boxShadow: `0 0 10px var(--tw-color-${player.color.split('-')[1]}-500)`
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Log sự kiện */}
+                  <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden h-40 flex flex-col">
+                    <div className="bg-slate-900 px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-700">
+                      Nhật ký Hành Trình
+                    </div>
+                    <div className="p-4 overflow-y-auto flex-1 text-sm space-y-2 font-mono text-slate-300">
+                      {logs.map((log, idx) => (
+                        <div key={idx} className={`${idx === 0 ? 'text-white font-bold opacity-100' : 'opacity-60'}`}>
+                          <i className="fas fa-arrow-right text-xs inline mr-1 text-cyan-500"></i> {log}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // Component Vẽ Quân Cờ (Avatar)
+        function PlayerToken({ player, inBoard }) {
+          return (
+            <div className={`relative group ${inBoard ? 'w-8 h-8 md:w-10 md:h-10' : 'w-10 h-10'} rounded-full ${player.color} flex items-center justify-center font-bold text-white shadow-lg ${player.glow} border-2 border-white/20 z-30`}>
+              {/* Hiệu ứng viền xoay (Orbit) */}
+              <div className={`absolute -inset-1 rounded-full border border-dashed border-white/50 animate-[spin_4s_linear_infinite]`}></div>
+              <span className="relative z-10 text-sm md:text-base drop-shadow-md">{player.symbol}</span>
+              
+              {/* Tooltip */}
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 border border-slate-700">
+                {player.name}
+              </div>
+            </div>
+          );
+        }
+
+        // Khởi tạo React App
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
